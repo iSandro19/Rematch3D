@@ -11,11 +11,11 @@
 *.cs text diff=csharp
 
 # Unity Text Assets
-*.meta unityyaml
-*.unity unityyaml
-*.asset unityyaml
-*.prefab unityyaml
-*.mat unityyaml
+*.meta linguist-generated
+*.unity linguist-generated
+*.asset linguist-generated
+*.prefab linguist-generated
+*.mat linguist-generated
 *.anim unityyaml
 *.controller unityyaml
 *.overrideController unityyaml

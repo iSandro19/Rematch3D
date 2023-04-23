@@ -2,12 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PlayerState
-{
-    IDLE, RUN, ATK
-}
-
-public class PlayerController : MonoBehaviour
+public class PlayerController : ObjAlive
 {
     public CharacterController charac;
     public Animator anim;
@@ -18,28 +13,40 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        charac = GetComponent< CharacterController >();
-        anim = GetComponent< Animator >();
+        charac = GetComponent<CharacterController>();
+        anim = GetComponent<Animator>();
+
+        life = 4;
+        invincible = false;
+        dmgCooldown = 1f;
+        dmgTime = 0f;
     }
 
     void Update()
     {
-        if (atkTime <= 0f)
+        if (dead)
+        {
+            Debug.Log("dead");
+            anim.SetTrigger("dead");
+            enabled = false;
+        }
+        else if (atkTime <= 0f)
         {
             vel.x = Input.GetAxis("Horizontal") * velMax;
             vel.z = Input.GetAxis("Vertical") * velMax;
 
             if (vel == Vector3.zero)
             {
-                anim.SetInteger("state", (int)PlayerState.IDLE);
+                anim.SetBool("running", false);
             }
             else
             {
+                anim.SetBool("running", true);
+
                 transform.rotation = Quaternion.AngleAxis(
                     90f - Mathf.Rad2Deg * Mathf.Atan2(vel.z, vel.x),
                     Vector3.up
                 );
-                anim.SetInteger("state", (int)PlayerState.RUN);
 
                 charac.Move(vel * Time.deltaTime);
             }
@@ -47,12 +54,39 @@ public class PlayerController : MonoBehaviour
             if (Input.GetButtonDown("Fire1"))
             {
                 atkTime = atkCooldown;
-                anim.Play("ATK", -1, 0);
+
+                anim.SetTrigger("attack");
             }
         }
         else
         {
+            Collider[] cols = Physics.OverlapSphere(
+                (
+                    transform.position +
+                    transform.rotation * Vector3.forward +
+                    Vector3.up * 0.5f
+                ),
+                0.5f
+            );
+
+            foreach (Collider col in cols)
+            {
+                ObjEnemy enemy = col.gameObject.GetComponent<ObjEnemy>();
+
+                if (enemy != null)
+                {
+                    enemy.SendMessage("OnAtk", 1);
+                }
+            }
+
             atkTime -= Time.deltaTime;
         }
+    }
+
+    protected override void OnAtk(int dmg)
+    {
+        if (!dead && !invincible) anim.SetTrigger("dmg");
+
+        base.OnAtk(dmg);
     }
 }

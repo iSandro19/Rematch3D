@@ -30,18 +30,37 @@ public class PawnController : ObjEnemy
             yield return new WaitForSeconds(3f);
 
             // Si el objeto no está muerto ni invencible, moverlo a una posición aleatoria
-            if (!dead && !invincible)
+            if (!dead && !invincible && !hasMovedThisTurn)
             {
-                // Generar una dirección aleatoria perpendicular a la posición actual del enemigo
-                Vector2 perpendicularDirection = Random.insideUnitCircle.normalized;
-                Vector3 currentDirection = transform.forward;
-                perpendicularDirection = new Vector2(currentDirection.z, -currentDirection.x);
-                // Mover el enemigo en la dirección aleatoria
-                Vector3 newPos = transform.position + new Vector3(perpendicularDirection.x, 0f, perpendicularDirection.y) * jumpDistance;
+                // Generar un ángulo aleatorio en grados
+                float angle = Random.Range(0f, 360f);
+                // Convertir el ángulo a una dirección en el plano XZ
+                Vector2 direction = new Vector2(Mathf.Sin(angle * Mathf.Deg2Rad), Mathf.Cos(angle * Mathf.Deg2Rad));
+                // Calcular la posición objetivo
+                Vector3 targetPos = transform.position + new Vector3(direction.x, 0f, direction.y) * jumpDistance;
                 // Asegurarse de que el enemigo no salga del área del mapa
-                newPos.x = Mathf.Clamp(newPos.x, -mapSize + 0.5f, mapSize - 0.5f);
-                newPos.z = Mathf.Clamp(newPos.z, -mapSize + 0.5f, mapSize - 0.5f);
-                transform.position = newPos;
+                targetPos.x = Mathf.Clamp(targetPos.x, -mapSize + 0.5f, mapSize - 0.5f);
+                targetPos.z = Mathf.Clamp(targetPos.z, -mapSize + 0.5f, mapSize - 0.5f);
+                // Mover el enemigo progresivamente al punto de destino
+                float t = 0f;
+                while (t < 1f)
+                {
+                    t += Time.deltaTime * moveSpeed;
+                    transform.position = Vector3.Lerp(transform.position, targetPos, t);
+                    yield return null;
+                }
+                // Asegurarse de que el enemigo no haya chocado con ningún objeto en el camino
+                Collider[] hits = Physics.OverlapSphere(transform.position, 0.5f);
+                foreach (Collider hit in hits)
+                {
+                    if (hit.gameObject != gameObject && hit.isTrigger)
+                    {
+                        transform.position = transform.position - new Vector3(direction.x, 0f, direction.y) * jumpDistance;
+                        break;
+                    }
+                }
+                // Actualizar la variable que indica si el enemigo ya se movió en el turno actual
+                hasMovedThisTurn = true;
             }
         }
     }

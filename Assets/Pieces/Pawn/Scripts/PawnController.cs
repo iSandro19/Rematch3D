@@ -17,20 +17,24 @@ public class PawnController : ObjEnemy
         rend = GetComponent<MeshRenderer>();
 
         // Iniciar la corrutina para mover el objeto cada 1 segundo
-        StartCoroutine(MoveObjectEvery1Second());
+        StartCoroutine(MoveObjectEvery1Second(GameObject.Find("Player")));
     }
 
-    IEnumerator MoveObjectEvery1Second()
+    IEnumerator MoveObjectEvery1Second(GameObject player)
     {
         float stepSize = 1f; // Tamaño de cada paso
 
         while (true)
         {
-            // Seleccionar una dirección aleatoria (0, 90, 180 o 270 grados)
-            float angle = Random.Range(0, 4) * 90f;
+            // Calcular la dirección hacia el personaje
+            Vector3 dirToPlayer = (player.transform.position - transform.position).normalized;
 
-            // Calcular la dirección del movimiento en función del ángulo
-            Vector3 dir = Quaternion.Euler(0, angle, 0) * transform.forward;
+            // Calcular una dirección aleatoria con una ligera desviación hacia el jugador
+            float deviationAngle = Random.Range(-20f, 20f);
+            Vector3 dir = Quaternion.Euler(0, deviationAngle, 0) * dirToPlayer;
+
+            // Calcular la posición a la que saltar
+            Vector3 targetPos = transform.position + dir * stepSize;
 
             // Comprobar si la dirección elegida es válida (no sale del mapa y no colisiona con ningún objeto)
             RaycastHit hit;
@@ -38,8 +42,22 @@ public class PawnController : ObjEnemy
             float newZ = transform.position.z + dir.z * stepSize;
             if (!Physics.Raycast(transform.position, dir, out hit, stepSize))
             {
+                // Calcular el ángulo de la dirección actual
+                float angle = Mathf.Round(transform.eulerAngles.y / 90f) * 90f;
+
+                // Si se mueve en cruz, moverse 1 metro en esa dirección
+                if (angle == 0f || angle == 90f || angle == 180f || angle == 270f)
+                {
+                    targetPos = transform.position + dir * stepSize;
+                }
+                else // Si se mueve en diagonal, moverse a 45 grados y calcular la hipotenusa para mantenerse en el centro de los tiles
+                {
+                    float hypotenuse = Mathf.Sqrt(2) * stepSize / 2f;
+                    Vector3 offset = new Vector3(dir.x, 0, dir.z).normalized * hypotenuse;
+                    targetPos = transform.position + offset;
+                }
+
                 // Mover gradualmente hacia la nueva posición
-                Vector3 targetPos = transform.position + dir * stepSize;
                 float t = 0f;
                 while (t < 1f)
                 {

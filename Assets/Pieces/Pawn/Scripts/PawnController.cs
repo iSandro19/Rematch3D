@@ -14,7 +14,7 @@ public class PawnController : ObjEnemy
     {
         life = 3;
         invincible = false;
-        dmgCooldown = 1f;
+        dmgDur = 1f;
         dmgTime = 0f;
         rend = GetComponent<MeshRenderer>();
 

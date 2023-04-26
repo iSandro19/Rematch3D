@@ -7,7 +7,7 @@ public class ObjAlive : MonoBehaviour
     public int life;
     public int maxLife;
     protected float dmgTime;
-    public float dmgCooldown;
+    public float dmgDur;
     private bool _invicible;
 
     public bool dead
@@ -19,7 +19,7 @@ public class ObjAlive : MonoBehaviour
     {
         get
         {
-            return _invicible || Time.time < dmgTime + dmgCooldown;
+            return _invicible || Time.time < dmgTime + dmgDur;
         }
 
         set
@@ -34,7 +34,7 @@ public class ObjAlive : MonoBehaviour
         {
             float time = Time.time;
 
-            if (time > dmgTime + dmgCooldown)
+            if (time > dmgTime + dmgDur)
             {
                 dmgTime = time;
                 life -= dmg;
